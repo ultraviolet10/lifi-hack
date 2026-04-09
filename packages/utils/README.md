@@ -1,4 +1,4 @@
-# lifi-hack
+# vite-plus-starter
 
 A starter for creating a Vite Plus project.
 
