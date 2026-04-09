@@ -8,8 +8,8 @@
         "vite-plus": "catalog:",
       },
     },
-    "apps/website": {
-      "name": "website",
+    "apps/web": {
+      "name": "web",
       "version": "0.0.0",
       "devDependencies": {
         "typescript": "~6.0.2",
@@ -17,9 +17,12 @@
         "vite-plus": "catalog:",
       },
     },
-    "packages/utils": {
-      "name": "utils",
+    "packages/shared": {
+      "name": "shared",
       "version": "0.0.0",
+      "dependencies": {
+        "zod": "^4.3.6",
+      },
       "devDependencies": {
         "@types/node": "^25.5.0",
         "@typescript/native-preview": "7.0.0-dev.20260328.1",
@@ -253,6 +256,8 @@
 
     "semver": ["semver@7.7.4", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA=="],
 
+    "shared": ["shared@workspace:packages/shared"],
+
     "sirv": ["sirv@3.0.2", "", { "dependencies": { "@polka/url": "^1.0.0-next.24", "mrmime": "^2.0.0", "totalist": "^3.0.0" } }, "sha512-2wcC/oGxHis/BoHkkPwldgiPSYcpZK3JU28WoMVv55yHJgcZ8rlXvuG9iZggz+sU1d4bRgIGASwyWqjxu3FM0g=="],
 
     "source-map-js": ["source-map-js@1.2.1", "", {}, "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA=="],
@@ -277,16 +282,16 @@
 
     "undici-types": ["undici-types@7.18.2", "", {}, "sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w=="],
 
-    "utils": ["utils@workspace:packages/utils"],
-
     "vite": ["@voidzero-dev/vite-plus-core@0.1.16", "", { "dependencies": { "@oxc-project/runtime": "=0.123.0", "@oxc-project/types": "=0.123.0", "lightningcss": "^1.30.2", "postcss": "^8.5.6" }, "optionalDependencies": { "fsevents": "~2.3.3" }, "peerDependencies": { "@arethetypeswrong/core": "^0.18.1", "@tsdown/css": "0.21.7", "@tsdown/exe": "0.21.7", "@types/node": "^20.19.0 || >=22.12.0", "@vitejs/devtools": "^0.1.0", "esbuild": "^0.28.0", "jiti": ">=1.21.0", "less": "^4.0.0", "publint": "^0.3.0", "sass": "^1.70.0", "sass-embedded": "^1.70.0", "stylus": ">=0.54.8", "sugarss": "^5.0.0", "terser": "^5.16.0", "tsx": "^4.8.1", "typescript": "^5.0.0 || ^6.0.0", "unplugin-unused": "^0.5.0", "yaml": "^2.4.2" }, "optionalPeers": ["@arethetypeswrong/core", "@tsdown/css", "@tsdown/exe", "@types/node", "@vitejs/devtools", "esbuild", "jiti", "less", "publint", "sass", "sass-embedded", "stylus", "sugarss", "terser", "tsx", "typescript", "unplugin-unused", "yaml"] }, "sha512-fOyf14CXjcXqANFs2fCXEX+0Tn9ZjmqfFV+qTnARwIF1Kzl8WquO4XtvlDgs/fTQ91H4AyoNUgkvWdKS+C4xYA=="],
 
     "vite-plus": ["vite-plus@0.1.16", "", { "dependencies": { "@oxc-project/types": "=0.123.0", "@voidzero-dev/vite-plus-core": "0.1.16", "@voidzero-dev/vite-plus-test": "0.1.16", "oxfmt": "=0.43.0", "oxlint": "=1.58.0", "oxlint-tsgolint": "=0.20.0" }, "optionalDependencies": { "@voidzero-dev/vite-plus-darwin-arm64": "0.1.16", "@voidzero-dev/vite-plus-darwin-x64": "0.1.16", "@voidzero-dev/vite-plus-linux-arm64-gnu": "0.1.16", "@voidzero-dev/vite-plus-linux-arm64-musl": "0.1.16", "@voidzero-dev/vite-plus-linux-x64-gnu": "0.1.16", "@voidzero-dev/vite-plus-linux-x64-musl": "0.1.16", "@voidzero-dev/vite-plus-win32-arm64-msvc": "0.1.16", "@voidzero-dev/vite-plus-win32-x64-msvc": "0.1.16" }, "bin": { "vp": "bin/vp", "oxfmt": "bin/oxfmt", "oxlint": "bin/oxlint" } }, "sha512-sgYHc5zWLSDInaHb/abvEA7UOwh7sUWuyNt+Slphj55jPvzodT8Dqw115xyKwDARTuRFSpm1eo/t58qZ8/NylQ=="],
 
-    "website": ["website@workspace:apps/website"],
+    "web": ["web@workspace:apps/web"],
 
     "ws": ["ws@8.20.0", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA=="],
 
     "yaml": ["yaml@2.8.3", "", { "bin": { "yaml": "bin.mjs" } }, "sha512-AvbaCLOO2Otw/lW5bmh9d/WEdcDFdQp2Z2ZUH3pX9U2ihyUY0nvLv7J6TrWowklRGPYbB/IuIMfYgxaCPg5Bpg=="],
+
+    "zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
   }
 }
