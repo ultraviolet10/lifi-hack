@@ -67,7 +67,7 @@ async function fetchAllVaults(env: Env): Promise<Vault[]> {
     const json = await res.json();
     const parsed = VaultListResponseSchema.parse(json);
     allVaults.push(...parsed.data);
-    cursor = parsed.nextCursor;
+    cursor = parsed.nextCursor ?? null;
   } while (cursor);
 
   return allVaults;
@@ -88,7 +88,7 @@ export function filterVaults(vaults: Vault[], params: VaultFilterParams): Vault[
     result = result.filter((v) => v.underlyingTokens.some((t) => t.symbol.toUpperCase() === asset));
   }
   if (params.minApy != null) {
-    result = result.filter((v) => v.analytics.apy.total >= params.minApy!);
+    result = result.filter((v) => (v.analytics.apy.total ?? 0) >= params.minApy!);
   }
   if (params.minTvl != null) {
     result = result.filter((v) => Number(v.analytics.tvl.usd) >= params.minTvl!);
@@ -102,7 +102,7 @@ export function filterVaults(vaults: Vault[], params: VaultFilterParams): Vault[
 
 export function sortVaults(vaults: Vault[], sortBy: "apy" | "tvl"): Vault[] {
   return [...vaults].sort((a, b) => {
-    if (sortBy === "apy") return b.analytics.apy.total - a.analytics.apy.total;
+    if (sortBy === "apy") return (b.analytics.apy.total ?? 0) - (a.analytics.apy.total ?? 0);
     return Number(b.analytics.tvl.usd) - Number(a.analytics.tvl.usd);
   });
 }

@@ -13,16 +13,16 @@ export const UnderlyingTokenSchema = z.object({
 
 export const AnalyticsSchema = z.object({
   apy: z.object({
-    base: z.number(),
-    total: z.number(),
-    reward: z.number(),
+    base: z.number().nullable(),
+    total: z.number().nullable(),
+    reward: z.number().nullable(),
   }),
   tvl: z.object({
     usd: z.string(),
   }),
-  apy1d: z.number(),
-  apy7d: z.number(),
-  apy30d: z.number(),
+  apy1d: z.number().nullable(),
+  apy7d: z.number().nullable(),
+  apy30d: z.number().nullable(),
   updatedAt: z.string(),
 });
 
@@ -49,7 +49,7 @@ export type Vault = z.infer<typeof VaultSchema>;
 
 export const VaultListResponseSchema = z.object({
   data: z.array(VaultSchema),
-  nextCursor: z.string().nullable(),
+  nextCursor: z.string().nullable().optional(),
   total: z.number(),
 });
 

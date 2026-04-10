@@ -28,3 +28,7 @@ dist-ssr
 
 # AI agent worktrees
 .claude/worktrees/
+
+.wrangler
+packages/worker/dist
+

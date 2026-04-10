@@ -15,6 +15,11 @@ export interface Env {
 
 const app = new Hono<{ Bindings: Env }>();
 
+app.onError((err, c) => {
+  console.error("Unhandled error:", err.message, err.stack);
+  return c.json({ error: err.message }, 500);
+});
+
 app.use(
   "/api/*",
   cors({

@@ -10,7 +10,20 @@ Help users find the best yield vaults, understand risks, and deposit into vaults
 Use tools to get real data — never make up numbers or vault names.
 Explain in simple terms. When recommending vaults, always mention: name, protocol, APY, TVL, and risk tier (safe/growth/bold).
 If the user wants to deposit, use build_deposit_tx to generate the transaction.
-Be concise but helpful.`;
+Be concise but helpful.
+
+Common token addresses (use these for from_token in build_deposit_tx):
+- USDC on Ethereum (chainId 1): 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48
+- USDT on Ethereum (chainId 1): 0xdAC17F958D2ee523a2206206994597C13D831ec7
+- DAI on Ethereum (chainId 1): 0x6B175474E89094C44Da98b954EedeAC495271d0F
+- WETH on Ethereum (chainId 1): 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
+- ETH (native): 0x0000000000000000000000000000000000000000
+- USDC on Arbitrum (chainId 42161): 0xaf88d065e77c8cC2239327C5EDb3A432268e5831
+- USDC on Optimism (chainId 10): 0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85
+- USDC on Base (chainId 8453): 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
+- USDC on Polygon (chainId 137): 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359
+
+When building a deposit tx, use the vault's chainId as both from_chain_id and vault_chain_id for same-chain deposits. Convert human-readable amounts to smallest unit (e.g., 100 USDC = "100000000" for 6 decimals, 1 ETH = "1000000000000000000" for 18 decimals).`;
 
 const MAX_TOOL_ITERATIONS = 5;
 
@@ -216,7 +229,7 @@ async function executeTool(
         network: v.network,
         address: v.address,
         chainId: v.chainId,
-        apy: `${v.analytics.apy.total.toFixed(2)}%`,
+        apy: `${(v.analytics.apy.total ?? 0).toFixed(2)}%`,
         tvl: `$${Number(v.analytics.tvl.usd).toLocaleString()}`,
         riskTier: getRiskTier(v),
         underlyingTokens: v.underlyingTokens.map((t) => t.symbol).join(", "),
@@ -240,21 +253,25 @@ async function executeTool(
     }
 
     case "build_deposit_tx": {
-      const vaultChainId = input.vault_chain_id as number;
-      const fromChainId = (input.from_chain_id as number) ?? vaultChainId;
-      const quote = await getQuote(
-        {
-          fromChain: String(fromChainId),
-          toChain: String(vaultChainId),
-          fromToken: input.from_token as string,
-          toToken: input.vault_address as string,
-          fromAddress: input.user_address as string,
-          toAddress: input.user_address as string,
-          fromAmount: input.amount as string,
-        },
-        env,
-      );
-      return quote;
+      try {
+        const vaultChainId = input.vault_chain_id as number;
+        const fromChainId = (input.from_chain_id as number) ?? vaultChainId;
+        const quote = await getQuote(
+          {
+            fromChain: String(fromChainId),
+            toChain: String(vaultChainId),
+            fromToken: input.from_token as string,
+            toToken: input.vault_address as string,
+            fromAddress: input.user_address as string,
+            toAddress: input.user_address as string,
+            fromAmount: input.amount as string,
+          },
+          env,
+        );
+        return quote;
+      } catch (e) {
+        return { error: e instanceof Error ? e.message : "Quote failed" };
+      }
     }
 
     default:
