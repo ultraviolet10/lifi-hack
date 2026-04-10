@@ -1,0 +1,37 @@
+{
+  "plugins": ["typescript", "import", "unicorn", "oxc", "promise", "react"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "pedantic": "warn",
+    "style": "warn"
+  },
+  "env": {
+    "es2024": true
+  },
+  "ignorePatterns": ["**/dist/**", "**/node_modules/**", "**/.wrangler/**", "**/*.d.ts"],
+  "overrides": [
+    {
+      "files": ["apps/web/**/*.{ts,tsx,js,jsx}"],
+      "env": {
+        "browser": true
+      }
+    },
+    {
+      "files": ["packages/worker/**/*.ts"],
+      "env": {
+        "worker": true
+      },
+      "globals": {
+        "Env": "readonly",
+        "ExecutionContext": "readonly"
+      }
+    },
+    {
+      "files": ["packages/shared/**/*.ts"],
+      "env": {
+        "node": true
+      }
+    }
+  ]
+}
