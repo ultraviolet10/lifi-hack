@@ -8,7 +8,19 @@
     "build": "tsc && vp build",
     "preview": "vp preview"
   },
+  "dependencies": {
+    "@privy-io/react-auth": "^3.21.2",
+    "@tanstack/react-query": "^5.99.0",
+    "jotai": "^2.19.1",
+    "viem": "^2.47.17",
+    "wagmi": "^3.6.1"
+  },
   "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "typescript": "~6.0.2",
     "vite": "catalog:",
     "vite-plus": "catalog:"

@@ -1,8 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { AgentRequest, AgentResponse, ToolCallRecord } from "shared";
+import type { AgentEvent, AgentRequest, AgentResponse, ToolCallRecord } from "shared";
 import { getRiskTier } from "shared";
 import { getVaults, filterVaults, sortVaults } from "./earn-cache.ts";
 import { getQuote } from "./composer.ts";
+import { planGoal, type PlanGoalInput } from "./goal.ts";
 import type { Env } from "./index.ts";
 
 const SYSTEM_PROMPT = `You are Earnie, a friendly and knowledgeable DeFi yield assistant powered by LI.FI.
@@ -23,7 +24,9 @@ Common token addresses (use these for from_token in build_deposit_tx):
 - USDC on Base (chainId 8453): 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
 - USDC on Polygon (chainId 137): 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359
 
-When building a deposit tx, use the vault's chainId as both from_chain_id and vault_chain_id for same-chain deposits. Convert human-readable amounts to smallest unit (e.g., 100 USDC = "100000000" for 6 decimals, 1 ETH = "1000000000000000000" for 18 decimals).`;
+When building a deposit tx, use the vault's chainId as both from_chain_id and vault_chain_id for same-chain deposits. Convert human-readable amounts to smallest unit (e.g., 100 USDC = "100000000" for 6 decimals, 1 ETH = "1000000000000000000" for 18 decimals).
+
+When the user mentions both a target USD amount AND a deadline (e.g. "save $500 by December", "$50k in 3 years"), call plan_goal FIRST to get the required monthly contribution and suggested risk tier, THEN call discover_vaults passing that risk_tier. Quote the monthly contribution number in your final reply.`;
 
 const MAX_TOOL_ITERATIONS = 5;
 
@@ -124,84 +127,175 @@ const tools: Anthropic.Tool[] = [
       required: ["vault_address", "vault_chain_id", "from_token", "amount", "user_address"],
     },
   },
+  {
+    name: "plan_goal",
+    description:
+      "Decompose a savings goal into a required monthly contribution and a suggested risk tier. Call this FIRST whenever the user mentions both a target amount and a deadline (e.g. 'save $500 by December'), BEFORE calling discover_vaults. Then pass the returned riskTier into discover_vaults as risk_tier.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        target_amount_usd: {
+          type: "number",
+          description: "Final target amount in USD",
+        },
+        deadline_iso: {
+          type: "string",
+          description: "Target date in YYYY-MM-DD format",
+        },
+        current_principal_usd: {
+          type: "number",
+          description: "USD the user already has saved; defaults to 0",
+        },
+        risk_preference: {
+          type: "string",
+          enum: ["safe", "growth", "bold", "auto"],
+          description:
+            "User's stated risk appetite; 'auto' picks by time horizon (≤12mo safe, ≤36mo growth, >36mo bold)",
+        },
+      },
+      required: ["target_amount_usd", "deadline_iso"],
+    },
+  },
 ];
 
-export async function handleChat(
+// Async generator that drives the Claude tool_use loop and yields AgentEvents.
+// Consumed by both handleChat (non-streaming /api/chat) and the SSE route
+// (/api/chat/stream) in index.ts. Never throws — errors yield an "error" event
+// and return.
+export async function* runAgentLoop(
   request: AgentRequest,
   env: Env,
   ctx: ExecutionContext,
-): Promise<AgentResponse> {
-  const client = new Anthropic({ apiKey: env.CLAUDE_API_KEY });
-  const toolCallLog: ToolCallRecord[] = [];
+  signal?: AbortSignal,
+): AsyncGenerator<AgentEvent, void, void> {
+  try {
+    const client = new Anthropic({ apiKey: env.CLAUDE_API_KEY });
+    const toolCallLog: ToolCallRecord[] = [];
 
-  // Build initial messages from chat history
-  const messages: Anthropic.MessageParam[] = request.messages.map((m) => ({
-    role: m.role,
-    content: m.content,
-  }));
+    const messages: Anthropic.MessageParam[] = request.messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
 
-  // Inject user address context if provided
-  if (request.userAddress) {
-    messages[0] = {
-      ...messages[0],
-      content: `[User wallet: ${request.userAddress}]\n\n${messages[0].content}`,
-    };
-  }
-
-  for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages,
-      tools,
-    });
-
-    // Check if we got a text response (done)
-    if (response.stop_reason === "end_turn") {
-      const text = response.content
-        .filter((b): b is Anthropic.TextBlock => b.type === "text")
-        .map((b) => b.text)
-        .join("");
-      return { reply: text, toolCalls: toolCallLog.length > 0 ? toolCallLog : undefined };
+    // Known issue (day_2.md): injects at [0] regardless of multi-turn position.
+    if (request.userAddress && messages.length > 0) {
+      messages[0] = {
+        ...messages[0],
+        content: `[User wallet: ${request.userAddress}]\n\n${messages[0].content as string}`,
+      };
     }
 
-    // Handle tool_use
-    if (response.stop_reason === "tool_use") {
-      const toolUseBlocks = response.content.filter(
+    for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
+      yield { type: "iteration", index: i };
+
+      const stream = client.messages.stream(
+        {
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1024,
+          system: SYSTEM_PROMPT,
+          messages,
+          tools,
+        },
+        { signal },
+      );
+
+      for await (const event of stream) {
+        if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+          yield { type: "text_delta", delta: event.delta.text };
+        }
+      }
+
+      const final = await stream.finalMessage();
+
+      if (final.stop_reason === "end_turn") {
+        const reply = final.content
+          .filter((b): b is Anthropic.TextBlock => b.type === "text")
+          .map((b) => b.text)
+          .join("");
+        yield {
+          type: "done",
+          reply,
+          toolCalls: toolCallLog.length > 0 ? toolCallLog : undefined,
+        };
+        return;
+      }
+
+      if (final.stop_reason !== "tool_use") continue;
+
+      const toolUseBlocks = final.content.filter(
         (b): b is Anthropic.ToolUseBlock => b.type === "tool_use",
       );
 
-      // Append assistant message with full content (text + tool_use blocks)
-      messages.push({ role: "assistant", content: response.content });
+      messages.push({ role: "assistant", content: final.content });
 
-      // Execute each tool and build results
       const toolResults: Anthropic.ToolResultBlockParam[] = [];
       for (const block of toolUseBlocks) {
-        const output = await executeTool(
-          block.name,
-          block.input as Record<string, unknown>,
-          env,
-          ctx,
-        );
+        yield {
+          type: "tool_use_start",
+          id: block.id,
+          name: block.name,
+          input: block.input,
+        };
+
+        let output: unknown;
+        try {
+          output = await executeTool(block.name, block.input as Record<string, unknown>, env, ctx);
+        } catch (e) {
+          output = { error: e instanceof Error ? e.message : String(e) };
+        }
+
         toolCallLog.push({ name: block.name, input: block.input, output });
         toolResults.push({
           type: "tool_result",
           tool_use_id: block.id,
           content: JSON.stringify(output),
         });
+
+        const ok = !(output !== null && typeof output === "object" && "error" in output);
+        yield {
+          type: "tool_result",
+          id: block.id,
+          name: block.name,
+          ok,
+          summary: JSON.stringify(output).slice(0, 400),
+        };
       }
 
-      // Append tool results as user message
       messages.push({ role: "user", content: toolResults });
+    }
+
+    yield {
+      type: "done",
+      reply: "I'm still working on that — could you try simplifying your question?",
+      toolCalls: toolCallLog.length > 0 ? toolCallLog : undefined,
+    };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    const where: "abort" | "model" = signal?.aborted || /abort/i.test(message) ? "abort" : "model";
+    yield { type: "error", message, where };
+  }
+}
+
+export async function handleChat(
+  request: AgentRequest,
+  env: Env,
+  ctx: ExecutionContext,
+): Promise<AgentResponse> {
+  let reply = "";
+  let toolCalls: ToolCallRecord[] | undefined;
+  let errorMsg: string | undefined;
+
+  for await (const ev of runAgentLoop(request, env, ctx)) {
+    if (ev.type === "done") {
+      reply = ev.reply;
+      toolCalls = ev.toolCalls;
+    } else if (ev.type === "error") {
+      errorMsg = ev.message;
     }
   }
 
-  // If we hit max iterations, return what we have
-  return {
-    reply: "I'm still working on that — could you try simplifying your question?",
-    toolCalls: toolCallLog.length > 0 ? toolCallLog : undefined,
-  };
+  if (errorMsg) throw new Error(errorMsg);
+  return { reply, toolCalls };
 }
 
 async function executeTool(
@@ -250,6 +344,10 @@ async function executeTool(
       const res = await fetch(`${env.EARN_API_BASE}/v1/earn/portfolio/${addr}/positions`);
       if (!res.ok) return { error: `Portfolio fetch failed (${res.status})` };
       return res.json();
+    }
+
+    case "plan_goal": {
+      return planGoal(input as unknown as PlanGoalInput);
     }
 
     case "build_deposit_tx": {

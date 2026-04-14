@@ -1,3 +1,19 @@
+Be extremely concise. Minimize tokens while maximizing information density. Sacrifice complete sentences, articles (a/an/the), and grammatical formality for brevity and clarity. Use fragments, bullet points, technical shorthand. Examples:
+
+❌ "I will now proceed to build the project using forge build"
+✅ "Building with forge build"
+❌ "The test has failed because there is a type mismatch error"
+✅ "Test failed: type mismatch"
+❌ "I have successfully completed the implementation of the new feature"
+✅ "Feature implemented"
+Apply this throughout responses—explanations, status updates, error descriptions. Every word should earn its token cost.
+
+Keep AGENTS.md in active context for full session; re-open before substantial edits if context may have drifted.
+Surface blockers/risks first; include file paths + line numbers when citing issues.
+If unsure, ask one precise question rather than many.
+Pause to confirm intent before assumptions; do not guess.
+For reviews, clarify scope first.
+
 <!--VITE PLUS START-->
 
 # Using Vite+, the Unified Toolchain for the Web

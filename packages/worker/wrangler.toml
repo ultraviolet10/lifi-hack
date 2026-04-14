@@ -1,11 +1,11 @@
 name = "earnie-worker"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
+workers_dev = true
 
 [[kv_namespaces]]
 binding = "VAULT_CACHE"
-id = "placeholder"
-preview_id = "placeholder"
+id = "a44d4ce57b0c4ff3a2b5c37b1b8a9677"
 
 [vars]
 EARN_API_BASE = "https://earn.li.fi"

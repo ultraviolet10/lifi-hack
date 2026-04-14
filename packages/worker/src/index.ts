@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { logger } from "hono/logger";
+import { streamSSE } from "hono/streaming";
 import { getVaults, filterVaults, sortVaults } from "./earn-cache.ts";
-import { handleChat } from "./agent.ts";
+import { handleChat, runAgentLoop } from "./agent.ts";
 import { getQuote } from "./composer.ts";
 import type { AgentRequest } from "shared";
 
@@ -19,6 +21,8 @@ app.onError((err, c) => {
   console.error("Unhandled error:", err.message, err.stack);
   return c.json({ error: err.message }, 500);
 });
+
+app.use("*", logger());
 
 app.use(
   "/api/*",
@@ -78,6 +82,37 @@ app.post("/api/chat", async (c) => {
   }
   const response = await handleChat(body, c.env, c.executionCtx);
   return c.json(response);
+});
+
+app.post("/api/chat/stream", async (c) => {
+  const body = await c.req.json<AgentRequest>();
+  if (!body.messages || !Array.isArray(body.messages) || body.messages.length === 0) {
+    return c.json({ error: "messages array is required" }, 400);
+  }
+
+  return streamSSE(c, async (stream) => {
+    const ac = new AbortController();
+    stream.onAbort(() => ac.abort());
+
+    try {
+      for await (const ev of runAgentLoop(body, c.env, c.executionCtx, ac.signal)) {
+        await stream.writeSSE({
+          event: ev.type,
+          data: JSON.stringify(ev),
+        });
+        if (ev.type === "done" || ev.type === "error") break;
+      }
+    } catch (e) {
+      await stream.writeSSE({
+        event: "error",
+        data: JSON.stringify({
+          type: "error",
+          message: e instanceof Error ? e.message : String(e),
+          where: "model",
+        }),
+      });
+    }
+  });
 });
 
 app.get("/api/quote", async (c) => {
