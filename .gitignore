@@ -32,3 +32,5 @@ dist-ssr
 .wrangler
 packages/worker/dist
 
+tools/smoke-deposit/.env
+
