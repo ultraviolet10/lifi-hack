@@ -6,7 +6,7 @@ import { YieldBalance } from "../components/YieldBalance.tsx";
 import { EarnieSheet } from "../components/EarnieSheet.tsx";
 import { useUsdcCapital } from "../hooks/useUsdcCapital.ts";
 import { formatMoney } from "../lib/format.ts";
-import { VaultYieldCard } from "../components/VaultYieldCard.tsx";
+import { VaultGarden } from "../components/VaultGarden.tsx";
 
 function Row({
   label,
@@ -75,22 +75,12 @@ export function Experiment() {
     <div className="experiment-theme flex min-h-screen bg-black text-white">
       {/* Left brand panel */}
       <aside className="relative hidden w-[40%] flex-col justify-between overflow-hidden bg-blue-600 p-10 md:flex">
-        <div className="absolute right-10 top-20 opacity-40">
-          {/* <div className="mb-6 h-28 w-28 rounded-full bg-blue-400/60" />
-          <div className="mb-4 h-16 w-56 rounded-2xl bg-blue-400/60" />
-          <div className="mb-4 h-12 w-56 rounded-2xl bg-blue-400/50" />
-          <div className="h-10 w-56 rounded-2xl bg-blue-400/40" /> */}
-          <VaultYieldCard
-            network="base"
-            vaultAddress="0x0000000f2eb9f69274678c76222b35eec7588a65"
-            protocolName="yoUSD"
-          />
-        </div>
+        <VaultGarden address={address} />
         <div />
-        <div>
+        <div className="relative z-10 max-w-xs rounded-2xl bg-blue-600/40 p-4 backdrop-blur-md">
           <h1 className="font-display text-5xl font-medium">Earnie</h1>
-          <p className="mt-3 max-w-xs text-blue-100">A home for your digital assets to grow.</p>
-          <div className="mt-10 flex gap-4 text-sm text-blue-200">
+          <p className="mt-3 text-blue-100">A home for your digital assets to grow.</p>
+          <div className="mt-6 flex gap-4 text-sm text-blue-200">
             <a href="#">Documentation</a>
             <span>·</span>
             <a href="#">Support</a>

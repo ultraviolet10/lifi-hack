@@ -54,7 +54,7 @@ export function EarnieSheet({ open, onClose }: Props) {
       <div
         role="dialog"
         aria-modal="true"
-        className="experiment-theme absolute inset-x-0 bottom-0 flex h-[75vh] animate-[sheet-up_240ms_ease-out] flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-zinc-950 text-white shadow-2xl motion-reduce:animate-none"
+        className="experiment-theme absolute inset-x-0 bottom-0 flex h-[88vh] animate-[sheet-up_240ms_ease-out] flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-zinc-950 text-white shadow-2xl motion-reduce:animate-none"
       >
         <div className="flex justify-center pt-3">
           <div className="h-1.5 w-10 rounded-full bg-zinc-700" />
