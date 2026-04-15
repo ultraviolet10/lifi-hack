@@ -1,25 +1,34 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useAccount } from "wagmi";
-import type { PortfolioPosition, Vault } from "shared";
-import { usePortfolio } from "../hooks/usePortfolio.ts";
+import { useYieldPositions } from "../hooks/useYieldPositions.ts";
+import { useUsdcCapital } from "../hooks/useUsdcCapital.ts";
 import { EarniePositionCard } from "./EarniePositionCard.tsx";
 import { YieldBalance } from "./YieldBalance.tsx";
 import { VaultCompass } from "./VaultCompass.tsx";
 import { relativeTime } from "../lib/format.ts";
-import { mockYieldUsd } from "../lib/mockYield.ts";
 
 type Props = { open: boolean; onClose: () => void };
 
-type MatchedPosition = PortfolioPosition & { vault: Vault };
-
-function hasVault(p: PortfolioPosition): p is MatchedPosition {
-  return !!p.vault;
-}
-
 export function EarnieSheet({ open, onClose }: Props) {
   const { address } = useAccount();
-  const portfolio = usePortfolio(address);
+  const positions = useYieldPositions(address);
+  const cap = useUsdcCapital(address);
+  console.log({ cap });
+  const [showCompass, setShowCompass] = useState(false);
+  const compassRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showCompass) return;
+    const id = requestAnimationFrame(() => {
+      compassRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [showCompass]);
+
+  useEffect(() => {
+    if (!open) setShowCompass(false);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -30,20 +39,8 @@ export function EarnieSheet({ open, onClose }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const positions = portfolio.data?.positions ?? [];
-  const matched = useMemo(
-    () => positions.filter(hasVault).sort((a, b) => b.balanceUsd - a.balanceUsd),
-    [positions],
-  );
-  const hiddenCount = positions.length - matched.length;
-
-  const principal = matched.reduce((s, p) => s + p.balanceUsd, 0);
-  const yieldUsd = matched.reduce((s, p) => s + mockYieldUsd(p), 0);
-
-  const newestUpdate = matched.reduce<string | null>((acc, p) => {
-    const u = p.vault.analytics.updatedAt;
-    return !acc || u > acc ? u : acc;
-  }, null);
+  const { matched, unmatched, newestUpdatedAt } = positions;
+  const hiddenCount = unmatched.length;
 
   if (!open) return null;
 
@@ -64,10 +61,10 @@ export function EarnieSheet({ open, onClose }: Props) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
-          {portfolio.isLoading ? (
+          {positions.isLoading ? (
             <LoadingState />
-          ) : portfolio.isError ? (
-            <ErrorState onRetry={() => portfolio.refetch()} />
+          ) : positions.isError ? (
+            <ErrorState onRetry={() => positions.refetch()} />
           ) : matched.length === 0 ? (
             <EmptyState open={open} />
           ) : (
@@ -76,7 +73,7 @@ export function EarnieSheet({ open, onClose }: Props) {
                 <p className="font-display mb-2 text-sm tracking-[0.15em] text-zinc-500">
                   YOUR CAPITAL
                 </p>
-                <YieldBalance principal={principal} yieldAmount={yieldUsd} />
+                <YieldBalance principal={cap.principal} yieldAmount={cap.yieldUsd} />
                 <p className="mt-3 text-sm text-zinc-400">
                   Working across <span className="text-white">{matched.length}</span> vault
                   {matched.length === 1 ? "" : "s"}. Yield shown is an estimate.
@@ -95,12 +92,30 @@ export function EarnieSheet({ open, onClose }: Props) {
                   recognised
                 </p>
               )}
+
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={() => setShowCompass((v) => !v)}
+                  className="font-display rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-xs tracking-[0.2em] text-white transition hover:bg-white/10"
+                >
+                  {showCompass ? "hide vault compass" : "grow your garden!"}
+                </button>
+              </div>
+
+              {showCompass && (
+                <div ref={compassRef} className="mt-6">
+                  <p className="font-display mb-2 text-sm tracking-[0.15em] text-zinc-500">
+                    EXPLORE YIELD
+                  </p>
+                  <VaultCompass open={open} asset="USDC" />
+                </div>
+              )}
             </>
           )}
         </div>
 
         <div className="font-display border-t border-white/5 px-6 py-3 text-[11px] tracking-widest text-zinc-500">
-          {newestUpdate ? `Updated ${relativeTime(newestUpdate)} · ` : ""}Powered by LI.FI
+          {newestUpdatedAt ? `Updated ${relativeTime(newestUpdatedAt)} · ` : ""}Powered by LI.FI
         </div>
       </div>
 

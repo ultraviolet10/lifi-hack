@@ -4,6 +4,7 @@ import type { CompassDirection, CompassPick, Vault } from "shared";
 import { useCompass } from "../hooks/useCompass.ts";
 import { useVaults } from "../hooks/useVaults.ts";
 import { VaultCompassTile, directionTint } from "./VaultCompassTile.tsx";
+import { DepositCard } from "./DepositCard.tsx";
 import { formatCompactUsd, formatPct } from "../lib/format.ts";
 
 type Props = { open: boolean; asset?: string };
@@ -242,15 +243,9 @@ export function VaultCompass({ open, asset }: Props) {
               <span className="text-zinc-500">·</span>
               <span className="truncate text-zinc-400">{tokenList(selectedVault)}</span>
             </div>
-            <a
-              href={selectedVault.protocol.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 rounded-full bg-white px-4 py-1.5 text-xs font-medium text-black"
-            >
-              Deposit
-            </a>
           </div>
+
+          <DepositCard vault={selectedVault} />
         </div>
       )}
 

@@ -5,6 +5,10 @@ import type {
   VaultFilterParams,
   CompassRequest,
   CompassResponse,
+  DepositQuote,
+  DepositQuoteError,
+  DepositQuoteRequest,
+  DepositStatus,
 } from "shared";
 
 const BASE = import.meta.env.VITE_WORKER_BASE_URL as string;
@@ -33,6 +37,35 @@ export function getVault(slug: string): Promise<Vault> {
 
 export function getPortfolio(address: string): Promise<PortfolioResponse> {
   return json<PortfolioResponse>(`/api/portfolio/${address}`);
+}
+
+export async function getDepositQuote(req: DepositQuoteRequest): Promise<DepositQuote> {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(req)) {
+    if (v !== undefined && v !== null) qs.set(k, String(v));
+  }
+  const res = await fetch(`${BASE}/api/quote?${qs.toString()}`);
+  const body = (await res.json()) as DepositQuote | DepositQuoteError;
+  if (!res.ok || "error" in body) {
+    const err = body as DepositQuoteError;
+    const e = new Error(err.message ?? `Quote failed: ${res.status}`);
+    (e as Error & { code?: string }).code = err.error;
+    throw e;
+  }
+  return body;
+}
+
+export function getDepositStatus(
+  txHash: string,
+  fromChain: number,
+  toChain: number,
+): Promise<DepositStatus> {
+  const qs = new URLSearchParams({
+    txHash,
+    fromChain: String(fromChain),
+    toChain: String(toChain),
+  });
+  return json<DepositStatus>(`/api/status?${qs.toString()}`);
 }
 
 export async function getCompass(body: CompassRequest): Promise<CompassResponse> {

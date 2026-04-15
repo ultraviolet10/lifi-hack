@@ -2,20 +2,10 @@ import { useState } from "react";
 import { Cuer } from "cuer";
 import { usePrivy } from "@privy-io/react-auth";
 import { useAccount, useBalance } from "wagmi";
-import { formatUnits } from "viem";
-import { useERC20Balance } from "../hooks/useERC20Balance.ts";
 import { YieldBalance } from "../components/YieldBalance.tsx";
 import { EarnieSheet } from "../components/EarnieSheet.tsx";
-import { usePortfolio } from "../hooks/usePortfolio.ts";
-import { mockYieldUsd } from "../lib/mockYield.ts";
-
-const USDC_BY_CHAIN: Record<number, `0x${string}`> = {
-  1: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-  8453: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-  10: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
-  42161: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-  137: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
-};
+import { useUsdcCapital } from "../hooks/useUsdcCapital.ts";
+import { formatMoney } from "../lib/format.ts";
 
 function Row({
   label,
@@ -56,23 +46,15 @@ function splitAddress(addr: string) {
 
 export function Experiment() {
   const { login, logout, authenticated, ready } = usePrivy();
-  const { address, chain } = useAccount();
+  const { address } = useAccount();
   const eth = useBalance({ address });
-  console.log("eth balance", eth.data, eth.status, eth.error, "chain:", chain?.id);
-  const usdcAddr = chain ? USDC_BY_CHAIN[chain.id] : undefined;
-  const usdc = useERC20Balance(usdcAddr, address, chain?.id);
-  console.log("usdc balance", usdc.data, usdc.status, usdc.error);
 
   const [open, setOpen] = useState<string | null>("assets");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const portfolio = usePortfolio(address);
-  const usdcPositions = (portfolio.data?.positions ?? []).filter(
-    (p) => p.asset.symbol.toUpperCase() === "USDC",
-  );
-  const usdcPrincipal = usdcPositions.reduce((s, p) => s + p.balanceUsd, 0);
-  const usdcYield = usdcPositions.reduce((s, p) => s + mockYieldUsd(p), 0);
-  const fallbackPrincipal = Number(usdc.data?.formatted ?? 0);
+  const cap = useUsdcCapital(address);
+  const ethAmount = eth.data ? Number(eth.data.value) / 10 ** eth.data.decimals : 0;
+  const ethText = formatMoney(ethAmount, { symbol: "ETH" }).text;
 
   if (!ready) return <div className="p-6 text-zinc-400">Loading…</div>;
 
@@ -101,7 +83,7 @@ export function Experiment() {
         <div />
         <div>
           <h1 className="font-display text-5xl font-medium">Earnie</h1>
-          <p className="mt-3 max-w-xs text-blue-100">A home for your digital assets.</p>
+          <p className="mt-3 max-w-xs text-blue-100">A home for your digital assets to grow.</p>
           <div className="mt-10 flex gap-4 text-sm text-blue-200">
             <a href="#">Documentation</a>
             <span>·</span>
@@ -165,15 +147,19 @@ export function Experiment() {
             <div className="flex flex-col gap-2">
               <div className="flex justify-between">
                 <span>ETH</span>
-                <span>{eth.data ? formatUnits(eth.data.value, eth.data.decimals) : "—"}</span>
+                <span>{eth.isLoading ? "—" : ethText}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>USDC</span>
-                <YieldBalance
-                  principal={usdcPrincipal || fallbackPrincipal}
-                  yieldAmount={usdcYield}
-                  onClick={() => setSheetOpen(true)}
-                />
+                {cap.isLoading ? (
+                  <span className="font-mono text-sm text-zinc-500">—</span>
+                ) : (
+                  <YieldBalance
+                    principal={cap.principal}
+                    yieldAmount={cap.yieldUsd}
+                    onClick={() => setSheetOpen(true)}
+                  />
+                )}
               </div>
             </div>
           </Row>

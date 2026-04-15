@@ -6,6 +6,13 @@ import type { Env } from "./index.ts";
 
 const COMPASS_CACHE_TTL = 3600;
 
+// Pinned demo vault (Base USDC, morpho-v1 Steakhouse). $370M TVL, confirmed
+// quotable via Composer at 0.2 USDC. Always surfaces as the top `safe` pick
+// so the demo deposit has a reliable target.
+const DEMO_SAFE_VAULT_SLUG = "8453-0xee8f4ec5672f09119b96ab6fb59c27e1b7e44b61";
+const DEMO_SAFE_RATIONALE =
+  "Steakhouse USDC on Morpho — $370M TVL, battle-tested curator. Safe home for idle stables.";
+
 type Bucket = Record<CompassDirection, Vault[]>;
 
 function strategyType(v: Vault): "passive" | "active" {
@@ -143,12 +150,18 @@ export async function handleCompass(
   if (cached) return cached;
 
   const allVaults = await getVaults(env, ctx);
+  const depositable = allVaults.filter((v) => v.isTransactional);
   const filtered = req.asset
-    ? allVaults.filter((v) =>
+    ? depositable.filter((v) =>
         v.underlyingTokens.some((t) => t.symbol.toUpperCase() === req.asset!.toUpperCase()),
       )
-    : allVaults;
+    : depositable;
   const b = bucket(filtered);
+
+  const pinned = allVaults.find((v) => v.slug === DEMO_SAFE_VAULT_SLUG);
+  if (pinned) {
+    b.safe = [pinned, ...b.safe.filter((v) => v.slug !== pinned.slug)];
+  }
 
   const short = (["safe", "growth", "bold", "wild"] as CompassDirection[]).some(
     (d) => b[d].length < 2,
@@ -168,6 +181,21 @@ export async function handleCompass(
     return null;
   });
   if (!picks) picks = fallback(b);
+
+  if (pinned) {
+    const withoutPinned = picks.filter((p) => p.vaultSlug !== pinned.slug);
+    const pinnedPick: CompassPick = {
+      direction: "safe",
+      vaultSlug: pinned.slug,
+      rationale: DEMO_SAFE_RATIONALE,
+    };
+    const safeCount = withoutPinned.filter((p) => p.direction === "safe").length;
+    if (safeCount >= 2) {
+      const idx = withoutPinned.findIndex((p) => p.direction === "safe");
+      withoutPinned.splice(idx, 1);
+    }
+    picks = [pinnedPick, ...withoutPinned];
+  }
 
   const response: CompassResponse = {
     picks,

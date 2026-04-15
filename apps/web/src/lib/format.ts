@@ -17,6 +17,28 @@ export function formatPct(n: number | null | undefined, digits = 2): string {
   return `${n.toFixed(digits)}%`;
 }
 
+export interface MoneyParts {
+  text: string;
+  whole: string;
+  dec: string;
+  tiny: boolean;
+}
+
+export function formatMoney(
+  n: number,
+  opts: { symbol?: string; prefix?: string } = {},
+): MoneyParts {
+  const { symbol, prefix = "" } = opts;
+  const safe = Number.isFinite(n) ? n : 0;
+  const tiny = safe > 0 && safe < 0.005;
+  const value = tiny ? 0 : safe;
+  const [w, d] = value.toFixed(2).split(".");
+  const whole = `${tiny ? "<" : ""}${prefix}${w}`;
+  const dec = d;
+  const text = symbol ? `${whole}.${dec} ${symbol}` : `${whole}.${dec}`;
+  return { text, whole, dec, tiny };
+}
+
 export function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
   const now = Date.now();

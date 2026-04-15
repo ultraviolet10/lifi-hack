@@ -88,7 +88,7 @@ export function EarniePositionCard({ position }: Props) {
                 </span>
               </div>
               <div className="mb-1 text-[10px] uppercase tracking-wide text-zinc-500">Trend</div>
-              <div className="flex gap-1">
+              <div className="flex flex-row gap-1">
                 {[
                   { label: "1d", v: v.analytics.apy1d },
                   { label: "7d", v: v.analytics.apy7d },
@@ -96,7 +96,7 @@ export function EarniePositionCard({ position }: Props) {
                 ].map((p) => (
                   <span
                     key={p.label}
-                    className="flex-1 rounded-md bg-zinc-800/70 px-2 py-1 text-center text-[11px]"
+                    className="flex-col items-center justify-center rounded-md bg-zinc-800/70 px-2 py-1 text-center text-[11px]"
                   >
                     <span className="text-zinc-500">{p.label}</span>{" "}
                     <span className="font-mono text-zinc-200">{formatPct(p.v, 1)}</span>

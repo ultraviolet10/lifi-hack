@@ -6,7 +6,7 @@ import { getVaults, filterVaults, sortVaults, matchVault } from "./earn-cache.ts
 import type { PortfolioPosition } from "shared";
 import { handleChat, runAgentLoop } from "./agent.ts";
 import { handleCompass } from "./compass.ts";
-import { getQuote } from "./composer.ts";
+import { getQuote, getStatus } from "./composer.ts";
 import type { AgentRequest, CompassRequest } from "shared";
 
 export interface Env {
@@ -152,9 +152,26 @@ app.get("/api/quote", async (c) => {
     fromAddress: c.req.query("fromAddress") ?? "",
     toAddress: c.req.query("toAddress"),
     fromAmount: c.req.query("fromAmount") ?? "",
+    slippage: c.req.query("slippage"),
+    order: c.req.query("order"),
+    maxPriceImpact: c.req.query("maxPriceImpact"),
   };
   const quote = await getQuote(params, c.env);
+  if ("error" in quote) {
+    const code = quote.error === "NO_ROUTE" ? 404 : quote.error === "BAD_REQUEST" ? 400 : 502;
+    return c.json(quote, code);
+  }
   return c.json(quote);
+});
+
+app.get("/api/status", async (c) => {
+  const txHash = c.req.query("txHash");
+  if (!txHash) return c.json({ error: "txHash required" }, 400);
+  const status = await getStatus(
+    { txHash, fromChain: c.req.query("fromChain"), toChain: c.req.query("toChain") },
+    c.env,
+  );
+  return c.json(status);
 });
 
 export default app;

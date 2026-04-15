@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
+import { formatMoney } from "../lib/format.ts";
 
 type YieldBalanceProps = {
   principal: number;
@@ -8,8 +9,7 @@ type YieldBalanceProps = {
 };
 
 function formatParts(n: number, currency: string) {
-  const [whole, dec] = n.toFixed(2).split(".");
-  return { whole: `${currency}${whole}`, dec };
+  return formatMoney(n, { prefix: currency });
 }
 
 const PAD_X = 24;
@@ -23,6 +23,7 @@ export function YieldBalance({
 }: YieldBalanceProps) {
   const total = principal + yieldAmount;
   const totalParts = formatParts(total, currency);
+  console.log({ principal, yieldAmount });
   const principalParts = formatParts(principal, currency);
   const yieldParts = formatParts(yieldAmount, currency);
 
