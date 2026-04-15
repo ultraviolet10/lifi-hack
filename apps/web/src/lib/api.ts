@@ -12,6 +12,7 @@ import type {
 } from "shared";
 
 const BASE = import.meta.env.VITE_WORKER_BASE_URL as string;
+const YO_BASE = "https://api.yo.xyz/api/v1";
 
 if (!BASE && import.meta.env.DEV) {
   console.warn("VITE_WORKER_BASE_URL missing — API calls will fail");
@@ -20,6 +21,12 @@ if (!BASE && import.meta.env.DEV) {
 async function json<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`);
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}: ${path}`);
+  return res.json() as Promise<T>;
+}
+
+async function externalJson<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}: ${url}`);
   return res.json() as Promise<T>;
 }
 
@@ -76,4 +83,67 @@ export async function getCompass(body: CompassRequest): Promise<CompassResponse>
   });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}: /api/compass`);
   return res.json() as Promise<CompassResponse>;
+}
+
+/**
+ * yo stuff
+ */
+
+export type YoNetwork = "base" | "ethereum" | "arbitrum" | "optimism";
+
+export interface YoYieldPoint {
+  timestamp: number;
+  yield: string;
+}
+
+export interface YoTvlPoint {
+  timestamp: number;
+  tvl: string;
+}
+
+interface YoEnvelope<T> {
+  data: T[];
+  message: string;
+  statusCode: number;
+}
+
+function normalizeYoNetwork(network: string): YoNetwork {
+  const n = network.toLowerCase();
+
+  switch (n) {
+    case "base":
+      return "base";
+    case "ethereum":
+    case "mainnet":
+      return "ethereum";
+    case "arbitrum":
+    case "arbitrum one":
+      return "arbitrum";
+    case "optimism":
+      return "optimism";
+    default:
+      throw new Error(`Unsupported YO network: ${network}`);
+  }
+}
+
+export async function getYoVaultYieldTimeseries(
+  network: string,
+  vaultAddress: string,
+): Promise<YoYieldPoint[]> {
+  const normalizedNetwork = normalizeYoNetwork(network);
+  const env = await externalJson<YoEnvelope<YoYieldPoint>>(
+    `${YO_BASE}/vault/yield/timeseries/${normalizedNetwork}/${vaultAddress}`,
+  );
+  return env.data;
+}
+
+export async function getYoVaultTvlTimeseries(
+  network: string,
+  vaultAddress: string,
+): Promise<YoTvlPoint[]> {
+  const normalizedNetwork = normalizeYoNetwork(network);
+  const env = await externalJson<YoEnvelope<YoTvlPoint>>(
+    `${YO_BASE}/vault/tvl/timeseries/${normalizedNetwork}/${vaultAddress}`,
+  );
+  return env.data;
 }
