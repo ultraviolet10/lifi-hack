@@ -23,10 +23,10 @@ const DIR_LABEL: Record<CompassDirection, string> = {
 };
 
 const DIR_CHIP_POS: Record<CompassDirection, string> = {
-  safe: "left-1 top-1",
-  growth: "right-1 top-1",
-  wild: "left-1 bottom-1",
-  bold: "right-1 bottom-1",
+  safe: "-top-4 left-0",
+  growth: "-top-4 right-0",
+  wild: "-bottom-4 left-0",
+  bold: "-bottom-4 right-0",
 };
 
 const DIR_CHIP_TINT: Record<CompassDirection, string> = {
@@ -114,65 +114,65 @@ export function VaultCompass({ open, asset }: Props) {
 
   return (
     <div>
-      <div className="relative mx-auto w-full max-w-[22rem] px-12 py-10">
-        {/* axis labels — outside grid */}
-        <span className="font-display absolute left-0 right-0 top-1 text-center text-sm tracking-[0.25em] text-zinc-300">
+      {/* OUTER — axis (risk / strategy) labels */}
+      <div className="relative mx-auto w-full max-w-[30rem] px-10 py-10">
+        <span className="font-display absolute left-0 right-0 top-1 text-center text-sm tracking-[0.25em] text-zinc-200">
           ← LOWER RISK
         </span>
-        <span className="font-display absolute bottom-1 left-0 right-0 text-center text-sm tracking-[0.25em] text-zinc-300">
+        <span className="font-display absolute bottom-1 left-0 right-0 text-center text-sm tracking-[0.25em] text-zinc-200">
           HIGHER RISK →
         </span>
-        <span className="font-display absolute left-0 top-1/2 origin-center -translate-y-1/2 -rotate-90 whitespace-nowrap text-sm tracking-[0.25em] text-zinc-300">
+        <span className="font-display absolute left-1 top-1/2 origin-center -translate-y-1/2 -rotate-90 whitespace-nowrap text-sm tracking-[0.25em] text-zinc-200">
           PASSIVE ←
         </span>
-        <span className="font-display absolute right-0 top-1/2 origin-center -translate-y-1/2 rotate-90 whitespace-nowrap text-sm tracking-[0.25em] text-zinc-300">
+        <span className="font-display absolute right-1 top-1/2 origin-center -translate-y-1/2 rotate-90 whitespace-nowrap text-sm tracking-[0.25em] text-zinc-200">
           → ACTIVE
         </span>
 
-        <div className="relative aspect-square w-full">
-          {/* quadrant chips */}
+        {/* MIDDLE — quadrant corner labels (safe / growth / wild / bold) */}
+        <div className="relative mx-auto aspect-square w-full max-w-sm">
           {(["safe", "growth", "bold", "wild"] as CompassDirection[]).map((dir) =>
             placedQuadrants.has(dir) ? (
               <span
                 key={dir}
-                className={`font-display pointer-events-none absolute z-10 text-[10px] font-semibold tracking-[0.2em] ${DIR_CHIP_POS[dir]} ${DIR_CHIP_TINT[dir]}`}
+                className={`font-display pointer-events-none absolute z-10 text-[11px] tracking-[0.2em] ${DIR_CHIP_POS[dir]} ${DIR_CHIP_TINT[dir]}`}
               >
                 {DIR_LABEL[dir]}
               </span>
             ) : null,
           )}
 
-          {/* crosshair */}
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute left-0 right-0 top-1/2 border-t border-dashed border-white/10" />
-            <div className="absolute bottom-0 top-0 left-1/2 border-l border-dashed border-white/10" />
-          </div>
-
-          {/* 4x4 grid */}
-          <div className="grid h-full w-full grid-cols-4 grid-rows-4 gap-2 p-1">
-            {Array.from({ length: 16 }).map((_, i) => {
-              const r = Math.floor(i / 4);
-              const c = i % 4;
-              const pick = picks.find((p) => {
-                const pos = positions.get(p.vaultSlug);
-                return pos?.r === r && pos?.c === c;
-              });
-              if (!pick) return <div key={i} className="rounded-xl bg-zinc-900/30" />;
-              const vault = vaultBySlug.get(pick.vaultSlug);
-              return (
-                <VaultCompassTile
-                  key={pick.vaultSlug}
-                  slug={pick.vaultSlug}
-                  protocolName={vault?.protocol.name ?? pick.vaultSlug}
-                  direction={pick.direction}
-                  apy={vault?.analytics.apy.total ?? null}
-                  rationale={pick.rationale}
-                  selected={selected === pick.vaultSlug}
-                  tooltipPlacement={r === 0 ? "bottom" : "top"}
-                  onClick={() => setSelected(selected === pick.vaultSlug ? null : pick.vaultSlug)}
-                />
-              );
-            })}
+          {/* INNER — 4x4 grid itself, full size of middle */}
+          <div className="absolute inset-0">
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute left-0 right-0 top-1/2 border-t border-dashed border-white/10" />
+              <div className="absolute bottom-0 top-0 left-1/2 border-l border-dashed border-white/10" />
+            </div>
+            <div className="grid h-full w-full grid-cols-4 grid-rows-4 gap-2">
+              {Array.from({ length: 16 }).map((_, i) => {
+                const r = Math.floor(i / 4);
+                const c = i % 4;
+                const pick = picks.find((p) => {
+                  const pos = positions.get(p.vaultSlug);
+                  return pos?.r === r && pos?.c === c;
+                });
+                if (!pick) return <div key={i} className="rounded-xl bg-zinc-900/30" />;
+                const vault = vaultBySlug.get(pick.vaultSlug);
+                return (
+                  <VaultCompassTile
+                    key={pick.vaultSlug}
+                    slug={pick.vaultSlug}
+                    protocolName={vault?.protocol.name ?? pick.vaultSlug}
+                    direction={pick.direction}
+                    apy={vault?.analytics.apy.total ?? null}
+                    rationale={pick.rationale}
+                    selected={selected === pick.vaultSlug}
+                    tooltipPlacement={r === 0 ? "bottom" : "top"}
+                    onClick={() => setSelected(selected === pick.vaultSlug ? null : pick.vaultSlug)}
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
