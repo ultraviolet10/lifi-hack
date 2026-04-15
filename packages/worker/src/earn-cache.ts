@@ -100,6 +100,22 @@ export function filterVaults(vaults: Vault[], params: VaultFilterParams): Vault[
   return result;
 }
 
+export function matchVault(
+  position: { chainId: number; protocolName: string; asset: { address: string } },
+  vaults: Vault[],
+): Vault | null {
+  const addr = position.asset.address.toLowerCase();
+  const proto = position.protocolName.toLowerCase();
+  return (
+    vaults.find(
+      (v) =>
+        v.chainId === position.chainId &&
+        v.protocol.name.toLowerCase() === proto &&
+        v.underlyingTokens.some((t) => t.address.toLowerCase() === addr),
+    ) ?? null
+  );
+}
+
 export function sortVaults(vaults: Vault[], sortBy: "apy" | "tvl"): Vault[] {
   return [...vaults].sort((a, b) => {
     if (sortBy === "apy") return (b.analytics.apy.total ?? 0) - (a.analytics.apy.total ?? 0);

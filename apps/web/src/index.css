@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+@theme {
+  --color-earnie-pink: #fab6f4;
+}
+
+@font-face {
+  font-family: "Terminal Grotesque";
+  src: url("/font/terminal-grotesque.ttf") format("truetype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Cotham Sans";
+  src: url("/font/CothamSans.otf") format("opentype");
+  font-display: swap;
+}
+
+.experiment-theme {
+  font-family: "Cotham Sans", system-ui, sans-serif;
+}
+
+.experiment-theme .font-display {
+  font-family: "Terminal Grotesque", system-ui, sans-serif;
+}
+
 :root {
   --color-bg: #0b0b0f;
   --color-surface: #14141b;

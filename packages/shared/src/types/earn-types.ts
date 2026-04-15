@@ -66,6 +66,8 @@ export const PortfolioPositionSchema = z.object({
   }),
   balanceUsd: z.number(),
   balanceNative: z.string(),
+  vaultSlug: z.string().nullable().optional(),
+  vault: VaultSchema.nullable().optional(),
 });
 
 export type PortfolioPosition = z.infer<typeof PortfolioPositionSchema>;

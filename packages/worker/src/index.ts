@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { streamSSE } from "hono/streaming";
-import { getVaults, filterVaults, sortVaults } from "./earn-cache.ts";
+import { getVaults, filterVaults, sortVaults, matchVault } from "./earn-cache.ts";
+import type { PortfolioPosition } from "shared";
 import { handleChat, runAgentLoop } from "./agent.ts";
 import { getQuote } from "./composer.ts";
 import type { AgentRequest } from "shared";
@@ -80,10 +81,19 @@ app.get("/api/portfolio/:addr", async (c) => {
   if (!/^0x[a-fA-F0-9]{40}$/.test(addr)) {
     return c.json({ error: "Invalid address" }, 400);
   }
-  const res = await fetch(`${c.env.EARN_API_BASE}/v1/earn/portfolio/${addr}/positions`);
-  if (!res.ok) return c.json({ error: `Portfolio fetch failed (${res.status})` }, 502);
-  const data = await res.json();
-  return c.json(data);
+  const [portfolioRes, vaults] = await Promise.all([
+    fetch(`${c.env.EARN_API_BASE}/v1/earn/portfolio/${addr}/positions`),
+    getVaults(c.env, c.executionCtx),
+  ]);
+  if (!portfolioRes.ok) {
+    return c.json({ error: `Portfolio fetch failed (${portfolioRes.status})` }, 502);
+  }
+  const data = (await portfolioRes.json()) as { positions: PortfolioPosition[] };
+  const enriched = (data.positions ?? []).map((p) => {
+    const vault = matchVault(p, vaults);
+    return { ...p, vaultSlug: vault?.slug ?? null, vault };
+  });
+  return c.json({ positions: enriched });
 });
 
 app.post("/api/chat", async (c) => {

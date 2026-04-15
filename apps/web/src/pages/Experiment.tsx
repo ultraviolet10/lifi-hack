@@ -4,6 +4,10 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useAccount, useBalance } from "wagmi";
 import { formatUnits } from "viem";
 import { useERC20Balance } from "../hooks/useERC20Balance.ts";
+import { YieldBalance } from "../components/YieldBalance.tsx";
+import { EarnieSheet } from "../components/EarnieSheet.tsx";
+import { usePortfolio } from "../hooks/usePortfolio.ts";
+import { mockYieldUsd } from "../lib/mockYield.ts";
 
 const USDC_BY_CHAIN: Record<number, `0x${string}`> = {
   1: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
@@ -32,7 +36,7 @@ function Row({
         onClick={onToggle}
         className="flex w-full items-center justify-between py-5 text-left"
       >
-        <span className="text-lg text-zinc-100">{label}</span>
+        <span className="font-display text-lg text-zinc-100">{label}</span>
         <div className="flex items-center gap-3">
           {right}
           <span className="text-zinc-500">[{open ? "−" : "+"}]</span>
@@ -60,6 +64,15 @@ export function Experiment() {
   console.log("usdc balance", usdc.data, usdc.status, usdc.error);
 
   const [open, setOpen] = useState<string | null>("assets");
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const portfolio = usePortfolio(address);
+  const usdcPositions = (portfolio.data?.positions ?? []).filter(
+    (p) => p.asset.symbol.toUpperCase() === "USDC",
+  );
+  const usdcPrincipal = usdcPositions.reduce((s, p) => s + p.balanceUsd, 0);
+  const usdcYield = usdcPositions.reduce((s, p) => s + mockYieldUsd(p), 0);
+  const fallbackPrincipal = Number(usdc.data?.formatted ?? 0);
 
   if (!ready) return <div className="p-6 text-zinc-400">Loading…</div>;
 
@@ -76,7 +89,7 @@ export function Experiment() {
   const addrChunks = splitAddress(address);
 
   return (
-    <div className="flex min-h-screen bg-black text-white">
+    <div className="experiment-theme flex min-h-screen bg-black text-white">
       {/* Left brand panel */}
       <aside className="relative hidden w-[40%] flex-col justify-between overflow-hidden bg-blue-600 p-10 md:flex">
         <div className="absolute right-10 top-20 opacity-40">
@@ -87,7 +100,7 @@ export function Experiment() {
         </div>
         <div />
         <div>
-          <h1 className="text-5xl font-medium">Earnie</h1>
+          <h1 className="font-display text-5xl font-medium">Earnie</h1>
           <p className="mt-3 max-w-xs text-blue-100">A home for your digital assets.</p>
           <div className="mt-10 flex gap-4 text-sm text-blue-200">
             <a href="#">Documentation</a>
@@ -110,20 +123,37 @@ export function Experiment() {
         </div>
 
         <div className="mx-auto max-w-2xl">
-          <div className="mb-10 flex items-start justify-between">
-            <div>
-              <p className="mb-3 text-sm text-zinc-500">Your account</p>
-              <pre className="font-mono text-xs leading-5 text-zinc-400">
-                {addrChunks.map((c, i) => (
-                  <div key={i}>{c}</div>
-                ))}
-              </pre>
-            </div>
-            <div className="h-28 w-28 rounded bg-white p-2">
-              <Cuer.Root value={address}>
-                <Cuer.Finder radius={0} />
-                <Cuer.Cells radius={0} />
-              </Cuer.Root>
+          <div className="mb-10 flex items-center justify-between">
+            <p className="text-sm text-zinc-500">Your account</p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(address);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 3000);
+                }}
+                className="relative grid size-32 shrink-0 cursor-pointer place-items-center rounded-2xl border-2 border-dotted border-earnie-pink text-left font-mono text-xs leading-5 text-zinc-400 transition-colors duration-150 ease-[ease] [@media(hover:hover)]:hover:bg-earnie-pink/50 motion-reduce:transition-none"
+              >
+                <span
+                  className={`col-start-1 row-start-1 transition-opacity duration-150 ease-[cubic-bezier(0.215,0.61,0.355,1)] motion-reduce:transition-none ${copied ? "opacity-0" : "opacity-100"}`}
+                >
+                  {addrChunks.map((c, i) => (
+                    <div key={i}>{c}</div>
+                  ))}
+                </span>
+                <span
+                  className={`col-start-1 row-start-1 text-sm text-white transition-opacity duration-150 ease-[cubic-bezier(0.215,0.61,0.355,1)] motion-reduce:transition-none ${copied ? "opacity-100" : "opacity-0"}`}
+                >
+                  copied!
+                </span>
+              </button>
+              <div className="size-32 shrink-0 rounded-2xl bg-white p-2">
+                <Cuer.Root value={address} color="black">
+                  <Cuer.Finder radius={0} />
+                  <Cuer.Cells radius={0} />
+                </Cuer.Root>
+              </div>
             </div>
           </div>
 
@@ -135,13 +165,15 @@ export function Experiment() {
             <div className="flex flex-col gap-2">
               <div className="flex justify-between">
                 <span>ETH</span>
-                <span className="font-mono">
-                  {eth.data ? formatUnits(eth.data.value, eth.data.decimals) : "—"}
-                </span>
+                <span>{eth.data ? formatUnits(eth.data.value, eth.data.decimals) : "—"}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex items-center justify-between">
                 <span>USDC</span>
-                <span className="font-mono">{usdc.data?.formatted ?? "—"}</span>
+                <YieldBalance
+                  principal={usdcPrincipal || fallbackPrincipal}
+                  yieldAmount={usdcYield}
+                  onClick={() => setSheetOpen(true)}
+                />
               </div>
             </div>
           </Row>
@@ -153,16 +185,9 @@ export function Experiment() {
           >
             <p className="text-zinc-500">No permissions granted.</p>
           </Row>
-
-          <Row
-            label="Earnie"
-            open={open === "earnie"}
-            onToggle={() => setOpen(open === "earnie" ? null : "earnie")}
-          >
-            <p className="text-zinc-500">Earnie agent placeholder.</p>
-          </Row>
         </div>
       </main>
+      <EarnieSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
     </div>
   );
 }
