@@ -3,10 +3,10 @@ import { createPortal } from "react-dom";
 import { useAccount } from "wagmi";
 import type { PortfolioPosition, Vault } from "shared";
 import { usePortfolio } from "../hooks/usePortfolio.ts";
-import { useVaults } from "../hooks/useVaults.ts";
 import { EarniePositionCard } from "./EarniePositionCard.tsx";
 import { YieldBalance } from "./YieldBalance.tsx";
-import { formatCompactUsd, formatPct, relativeTime } from "../lib/format.ts";
+import { VaultCompass } from "./VaultCompass.tsx";
+import { relativeTime } from "../lib/format.ts";
 import { mockYieldUsd } from "../lib/mockYield.ts";
 
 type Props = { open: boolean; onClose: () => void };
@@ -57,7 +57,7 @@ export function EarnieSheet({ open, onClose }: Props) {
       <div
         role="dialog"
         aria-modal="true"
-        className="absolute inset-x-0 bottom-0 flex h-[75vh] animate-[sheet-up_240ms_ease-out] flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-zinc-950 text-white shadow-2xl motion-reduce:animate-none"
+        className="experiment-theme absolute inset-x-0 bottom-0 flex h-[75vh] animate-[sheet-up_240ms_ease-out] flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-zinc-950 text-white shadow-2xl motion-reduce:animate-none"
       >
         <div className="flex justify-center pt-3">
           <div className="h-1.5 w-10 rounded-full bg-zinc-700" />
@@ -69,11 +69,13 @@ export function EarnieSheet({ open, onClose }: Props) {
           ) : portfolio.isError ? (
             <ErrorState onRetry={() => portfolio.refetch()} />
           ) : matched.length === 0 ? (
-            <EmptyState />
+            <EmptyState open={open} />
           ) : (
             <>
               <div className="mb-6">
-                <p className="mb-2 text-sm text-zinc-500">Your capital</p>
+                <p className="font-display mb-2 text-sm tracking-[0.15em] text-zinc-500">
+                  YOUR CAPITAL
+                </p>
                 <YieldBalance principal={principal} yieldAmount={yieldUsd} />
                 <p className="mt-3 text-sm text-zinc-400">
                   Working across <span className="text-white">{matched.length}</span> vault
@@ -97,7 +99,7 @@ export function EarnieSheet({ open, onClose }: Props) {
           )}
         </div>
 
-        <div className="border-t border-white/5 px-6 py-3 text-[11px] text-zinc-500">
+        <div className="font-display border-t border-white/5 px-6 py-3 text-[11px] tracking-[0.1em] text-zinc-500">
           {newestUpdate ? `Updated ${relativeTime(newestUpdate)} · ` : ""}Powered by LI.FI
         </div>
       </div>
@@ -135,47 +137,16 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-function EmptyState() {
-  const { data } = useVaults({ sortBy: "apy", riskTier: "safe", asset: "USDC" });
-  const suggestions = (data?.data ?? []).slice(0, 3);
-
+function EmptyState({ open }: { open: boolean }) {
   return (
     <div>
-      <p className="mb-1 text-sm text-zinc-500">Your capital</p>
-      <h2 className="mb-2 text-2xl font-semibold text-white">
+      <h2 className="font-display mb-2 text-3xl text-white">
         Earnie hasn't deployed your funds yet.
       </h2>
-      <p className="mb-6 text-sm text-zinc-400">
-        Here are a few safe USDC vaults you could start with.
+      <p className="mb-8 text-sm text-zinc-400">
+        Explore the yield landscape — tap a tile to see why Earnie picked it.
       </p>
-      <div className="flex flex-col gap-3">
-        {suggestions.map((v) => (
-          <a
-            key={v.slug}
-            href={v.protocol.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between rounded-2xl border border-white/5 bg-zinc-900/60 p-4 transition hover:border-emerald-500/40"
-          >
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-white">
-                {v.protocol.name}
-                <span className="ml-2 text-xs text-zinc-500">· {v.network}</span>
-              </div>
-              <div className="mt-0.5 text-xs text-zinc-500">
-                TVL {formatCompactUsd(Number(v.analytics.tvl.usd))}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="font-mono text-lg font-semibold text-emerald-300">
-                {formatPct(v.analytics.apy.total)}
-              </div>
-              <div className="text-[10px] uppercase tracking-wide text-zinc-500">APY</div>
-            </div>
-          </a>
-        ))}
-        {suggestions.length === 0 && <p className="text-sm text-zinc-500">Loading suggestions…</p>}
-      </div>
+      <VaultCompass open={open} asset="USDC" />
     </div>
   );
 }

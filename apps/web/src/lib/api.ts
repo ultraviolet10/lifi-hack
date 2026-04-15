@@ -1,4 +1,11 @@
-import type { Vault, VaultListResponse, PortfolioResponse, VaultFilterParams } from "shared";
+import type {
+  Vault,
+  VaultListResponse,
+  PortfolioResponse,
+  VaultFilterParams,
+  CompassRequest,
+  CompassResponse,
+} from "shared";
 
 const BASE = import.meta.env.VITE_WORKER_BASE_URL as string;
 
@@ -26,4 +33,14 @@ export function getVault(slug: string): Promise<Vault> {
 
 export function getPortfolio(address: string): Promise<PortfolioResponse> {
   return json<PortfolioResponse>(`/api/portfolio/${address}`);
+}
+
+export async function getCompass(body: CompassRequest): Promise<CompassResponse> {
+  const res = await fetch(`${BASE}/api/compass`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}: /api/compass`);
+  return res.json() as Promise<CompassResponse>;
 }

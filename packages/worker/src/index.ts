@@ -5,8 +5,9 @@ import { streamSSE } from "hono/streaming";
 import { getVaults, filterVaults, sortVaults, matchVault } from "./earn-cache.ts";
 import type { PortfolioPosition } from "shared";
 import { handleChat, runAgentLoop } from "./agent.ts";
+import { handleCompass } from "./compass.ts";
 import { getQuote } from "./composer.ts";
-import type { AgentRequest } from "shared";
+import type { AgentRequest, CompassRequest } from "shared";
 
 export interface Env {
   CLAUDE_API_KEY: string;
@@ -134,6 +135,12 @@ app.post("/api/chat/stream", async (c) => {
       });
     }
   });
+});
+
+app.post("/api/compass", async (c) => {
+  const body = await c.req.json<CompassRequest>().catch(() => ({}) as CompassRequest);
+  const response = await handleCompass(body, c.env, c.executionCtx);
+  return c.json(response);
 });
 
 app.get("/api/quote", async (c) => {
