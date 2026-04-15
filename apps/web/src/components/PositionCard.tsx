@@ -2,7 +2,7 @@ import type { PortfolioPosition } from "shared";
 
 export function PositionCard({ position }: { position: PortfolioPosition }) {
   return (
-    <div className="rounded-2xl bg-[var(--color-surface)] border border-white/5 p-4 flex items-center justify-between">
+    <div className="rounded-2xl bg-(--color-surface) border border-white/5 p-4 flex items-center justify-between">
       <div>
         <div className="text-base font-semibold">{position.asset.symbol}</div>
         <div className="text-xs text-zinc-400 mt-0.5">

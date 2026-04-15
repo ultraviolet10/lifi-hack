@@ -124,7 +124,7 @@ export function VaultCompass({ open, asset }: Props) {
   return (
     <div>
       {/* OUTER — axis (risk / strategy) labels */}
-      <div className="relative mx-auto w-full max-w-[34rem] px-10 py-10">
+      <div className="relative mx-auto w-full max-w-136 px-10 py-10">
         <span className="font-display absolute left-0 right-0 top-1 text-center text-sm tracking-[0.25em] text-zinc-200">
           ← LOWER RISK
         </span>

@@ -99,7 +99,7 @@ export function EarnieSheet({ open, onClose }: Props) {
           )}
         </div>
 
-        <div className="font-display border-t border-white/5 px-6 py-3 text-[11px] tracking-[0.1em] text-zinc-500">
+        <div className="font-display border-t border-white/5 px-6 py-3 text-[11px] tracking-widest text-zinc-500">
           {newestUpdate ? `Updated ${relativeTime(newestUpdate)} · ` : ""}Powered by LI.FI
         </div>
       </div>

@@ -66,7 +66,7 @@ export function VaultDetail() {
         <span className={`text-xs px-2.5 py-1 rounded-full border ${tierColor[tier]}`}>{tier}</span>
       </header>
 
-      <section className="rounded-2xl bg-[var(--color-surface)] border border-white/5 p-6 mb-4">
+      <section className="rounded-2xl bg-(--color-surface) border border-white/5 p-6 mb-4">
         <div className="text-xs text-zinc-400 uppercase tracking-wider">Current APY</div>
         <div className="flex items-baseline gap-2 mt-1">
           <span className="text-5xl font-semibold tabular-nums">
@@ -80,7 +80,7 @@ export function VaultDetail() {
         </div>
       </section>
 
-      <section className="rounded-2xl bg-[var(--color-surface)] border border-white/5 p-6 mb-4">
+      <section className="rounded-2xl bg-(--color-surface) border border-white/5 p-6 mb-4">
         <div className="text-xs text-zinc-400 uppercase tracking-wider mb-3">Historical APY</div>
         <div className="grid grid-cols-3 gap-4">
           <Stat label="1d" value={`${apy1d.toFixed(2)}%`} />
@@ -89,7 +89,7 @@ export function VaultDetail() {
         </div>
       </section>
 
-      <section className="rounded-2xl bg-[var(--color-surface)] border border-white/5 p-6 mb-4">
+      <section className="rounded-2xl bg-(--color-surface) border border-white/5 p-6 mb-4">
         <div className="grid grid-cols-2 gap-4">
           <Stat label="TVL" value={fmtTvl(vault.analytics.tvl.usd)} />
           <Stat label="Chain" value={vault.network} />
@@ -101,7 +101,7 @@ export function VaultDetail() {
         </div>
       </section>
 
-      <section className="rounded-2xl bg-[var(--color-surface)] border border-white/5 p-4 mb-8">
+      <section className="rounded-2xl bg-(--color-surface) border border-white/5 p-4 mb-8">
         <div className="text-xs text-zinc-400 uppercase tracking-wider mb-2">Contract</div>
         <div className="font-mono text-xs text-zinc-300 break-all">{vault.address}</div>
       </section>
@@ -109,7 +109,7 @@ export function VaultDetail() {
       <button
         onClick={() => alert("Deposit flow coming next")}
         disabled={!vault.isTransactional}
-        className="w-full py-3.5 rounded-xl bg-[var(--color-brand)] font-medium hover:opacity-90 disabled:opacity-40"
+        className="w-full py-3.5 rounded-xl bg-(--color-brand) font-medium hover:opacity-90 disabled:opacity-40"
       >
         {vault.isTransactional ? "Deposit" : "Not available"}
       </button>

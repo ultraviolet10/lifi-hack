@@ -54,7 +54,7 @@ export function YieldBalance({
       onFocus={() => setActive(true)}
       onBlur={() => setActive(false)}
       style={{ width, height }}
-      className="relative inline-block rounded-2xl border-2 border-dotted border-earnie-pink align-middle transition-[width,height] duration-[220ms] ease-[cubic-bezier(0.645,0.045,0.355,1)] active:scale-[0.98] focus:outline-none motion-reduce:transition-none motion-reduce:active:scale-100"
+      className="relative inline-block rounded-2xl border-2 border-dotted border-earnie-pink align-middle transition-[width,height] duration-220 ease-[cubic-bezier(0.645,0.045,0.355,1)] active:scale-[0.98] focus:outline-none motion-reduce:transition-none motion-reduce:active:scale-100"
     >
       {/* Combined */}
       <span
