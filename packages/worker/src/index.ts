@@ -75,6 +75,17 @@ app.get("/api/vaults/:slug", async (c) => {
   return c.json(vault);
 });
 
+app.get("/api/portfolio/:addr", async (c) => {
+  const addr = c.req.param("addr");
+  if (!/^0x[a-fA-F0-9]{40}$/.test(addr)) {
+    return c.json({ error: "Invalid address" }, 400);
+  }
+  const res = await fetch(`${c.env.EARN_API_BASE}/v1/earn/portfolio/${addr}/positions`);
+  if (!res.ok) return c.json({ error: `Portfolio fetch failed (${res.status})` }, 502);
+  const data = await res.json();
+  return c.json(data);
+});
+
 app.post("/api/chat", async (c) => {
   const body = await c.req.json<AgentRequest>();
   if (!body.messages || !Array.isArray(body.messages) || body.messages.length === 0) {
