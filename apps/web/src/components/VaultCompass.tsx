@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAccount } from "wagmi";
 import type { CompassDirection, CompassPick, Vault } from "shared";
 import { useCompass } from "../hooks/useCompass.ts";
@@ -23,10 +23,10 @@ const DIR_LABEL: Record<CompassDirection, string> = {
 };
 
 const DIR_CHIP_POS: Record<CompassDirection, string> = {
-  safe: "-top-4 left-0",
-  growth: "-top-4 right-0",
-  wild: "-bottom-4 left-0",
-  bold: "-bottom-4 right-0",
+  safe: "-top-8 left-0",
+  growth: "-top-8 right-0",
+  wild: "-bottom-8 left-0",
+  bold: "-bottom-8 right-0",
 };
 
 const DIR_CHIP_TINT: Record<CompassDirection, string> = {
@@ -80,6 +80,15 @@ export function VaultCompass({ open, asset }: Props) {
   const compass = useCompass(address, asset, open);
   const vaultsQ = useVaults({ asset });
   const [selected, setSelected] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!selected) return;
+    const id = requestAnimationFrame(() => {
+      cardRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [selected]);
 
   const vaultBySlug = useMemo(() => {
     const m = new Map<string, Vault>();
@@ -115,7 +124,7 @@ export function VaultCompass({ open, asset }: Props) {
   return (
     <div>
       {/* OUTER — axis (risk / strategy) labels */}
-      <div className="relative mx-auto w-full max-w-[30rem] px-10 py-10">
+      <div className="relative mx-auto w-full max-w-[34rem] px-10 py-10">
         <span className="font-display absolute left-0 right-0 top-1 text-center text-sm tracking-[0.25em] text-zinc-200">
           ← LOWER RISK
         </span>
@@ -179,6 +188,7 @@ export function VaultCompass({ open, asset }: Props) {
 
       {selectedPick && selectedVault && (
         <div
+          ref={cardRef}
           className={`mt-6 overflow-hidden rounded-2xl border border-white/5 p-4 animate-[fade-in_180ms_ease-out] ${directionTint[selectedPick.direction]}`}
         >
           <div className="flex items-start justify-between gap-3">
