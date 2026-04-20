@@ -114,8 +114,15 @@ export function EarnieSheet({ open, onClose }: Props) {
           )}
         </div>
 
-        <div className="font-display border-t border-white/5 px-6 py-3 text-[11px] tracking-widest text-zinc-500">
-          {newestUpdatedAt ? `Updated ${relativeTime(newestUpdatedAt)} · ` : ""}Powered by LI.FI
+        <div className="font-display flex items-center justify-center gap-1.5 border-t border-white/5 px-6 py-3 text-[11px] tracking-widest text-zinc-500">
+          <span>
+            {newestUpdatedAt ? `Updated ${relativeTime(newestUpdatedAt)} · ` : ""}Powered by
+          </span>
+          <img
+            src="https://mintcdn.com/lifi/EmProAEgMrruLUbI/logo/dark.png?fit=max&auto=format&n=EmProAEgMrruLUbI&q=85&s=d02539147db168291d7c711beb45d10b"
+            alt="LI.FI"
+            className="h-3 w-auto object-contain"
+          />
         </div>
       </div>
 

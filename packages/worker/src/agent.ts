@@ -334,14 +334,18 @@ async function executeTool(
     case "get_vault_detail": {
       const network = input.network as string;
       const address = input.address as string;
-      const res = await fetch(`${env.EARN_API_BASE}/v1/earn/vaults/${network}/${address}`);
+      const res = await fetch(`${env.EARN_API_BASE}/v1/vaults/${network}/${address}`, {
+        headers: { "x-lifi-api-key": env.COMPOSER_API_KEY },
+      });
       if (!res.ok) return { error: `Vault not found (${res.status})` };
       return res.json();
     }
 
     case "get_portfolio": {
       const addr = input.address as string;
-      const res = await fetch(`${env.EARN_API_BASE}/v1/earn/portfolio/${addr}/positions`);
+      const res = await fetch(`${env.EARN_API_BASE}/v1/portfolio/${addr}/positions`, {
+        headers: { "x-lifi-api-key": env.COMPOSER_API_KEY },
+      });
       if (!res.ok) return { error: `Portfolio fetch failed (${res.status})` };
       return res.json();
     }

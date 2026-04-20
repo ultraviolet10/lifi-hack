@@ -155,8 +155,8 @@ export function VaultCompass({ open, asset }: Props) {
           {/* INNER — 4x4 grid itself, full size of middle */}
           <div className="absolute inset-0">
             <div className="pointer-events-none absolute inset-0">
-              <div className="absolute left-0 right-0 top-1/2 border-t border-dashed border-white/10" />
-              <div className="absolute bottom-0 top-0 left-1/2 border-l border-dashed border-white/10" />
+              <div className="absolute left-0 right-0 top-1/2 border-t-2 border-dashed border-white/30" />
+              <div className="absolute bottom-0 top-0 left-1/2 border-l-2 border-dashed border-white/30" />
             </div>
             <div className="grid h-full w-full grid-cols-4 grid-rows-4 gap-2">
               {Array.from({ length: 16 }).map((_, i) => {

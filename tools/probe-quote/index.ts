@@ -64,7 +64,7 @@ async function main() {
     minTvlUsd: "100000",
     limit: String(limit),
   });
-  const disco = await fetch(`${EARN_API}/v1/earn/vaults?${params}`);
+  const disco = await fetch(`${EARN_API}/v1/vaults?${params}`);
   if (!disco.ok) {
     console.error(`FAIL earn discovery ${disco.status}: ${await disco.text()}`);
     process.exit(1);

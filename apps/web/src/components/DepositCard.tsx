@@ -35,7 +35,7 @@ export function DepositCard({ vault }: { vault: Vault }) {
               {state.sourceChainId !== vault.chainId ? " → bridge" : ""}
             </>
           ) : (
-            <>Source: auto-picked from Base / Ethereum</>
+            <>Source: cherry picked from Base & Ethereum</>
           )}
         </div>
         <button

@@ -55,11 +55,13 @@ async function fetchAllVaults(env: Env): Promise<Vault[]> {
   let cursor: string | null = null;
 
   do {
-    const url = new URL(`${env.EARN_API_BASE}/v1/earn/vaults`);
+    const url = new URL(`${env.EARN_API_BASE}/v1/vaults`);
     url.searchParams.set("limit", "100");
     if (cursor) url.searchParams.set("cursor", cursor);
 
-    const res = await fetch(url.toString());
+    const res = await fetch(url.toString(), {
+      headers: { "x-lifi-api-key": env.COMPOSER_API_KEY },
+    });
     if (!res.ok) {
       throw new Error(`Earn API error (${res.status}): ${await res.text()}`);
     }

@@ -83,7 +83,9 @@ app.get("/api/portfolio/:addr", async (c) => {
     return c.json({ error: "Invalid address" }, 400);
   }
   const [portfolioRes, vaults] = await Promise.all([
-    fetch(`${c.env.EARN_API_BASE}/v1/earn/portfolio/${addr}/positions`),
+    fetch(`${c.env.EARN_API_BASE}/v1/portfolio/${addr}/positions`, {
+      headers: { "x-lifi-api-key": c.env.COMPOSER_API_KEY },
+    }),
     getVaults(c.env, c.executionCtx),
   ]);
   if (!portfolioRes.ok) {
